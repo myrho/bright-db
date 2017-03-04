@@ -1,5 +1,9 @@
 module Bright.Util exposing (..)
 
+{-|
+@docs isUri, isSubscribed
+-}
+
 import String
 import Set
 import Dict
@@ -10,6 +14,8 @@ import Graph exposing (Uri, Subject, Predicate, Local)
 import Store
 
 
+{-|
+-}
 isSubscribed : Model -> Uri -> Subject -> Predicate -> Bool
 isSubscribed model peer subject predicate =
     Store.getObject subject predicate model.subscribed
@@ -17,6 +23,8 @@ isSubscribed model peer subject predicate =
         |> Maybe.withDefault False
 
 
+{-|
+-}
 isUri : String -> Bool
 isUri =
     String.startsWith "http"

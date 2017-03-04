@@ -1,5 +1,9 @@
 module Graph exposing (..)
 
+{-|
+@docs State, Uri, Subject, Predicate, Graph, Node, Adjacency, LocalsOrRemotes, Local, Remote, empty, initNode, applyCharOps, applyRefOps, get
+-}
+
 import Dict exposing (Dict)
 import Set exposing (Set)
 import Tuple exposing (..)
@@ -7,26 +11,38 @@ import LSEQ exposing (LSEQ)
 import LSEQ.Types as LSEQ
 
 
+{-|
+-}
 type alias State =
     Int
 
 
+{-|
+-}
 type alias Uri =
     String
 
 
+{-|
+-}
 type alias Subject =
     Uri
 
 
+{-|
+-}
 type alias Predicate =
     Uri
 
 
+{-|
+-}
 type alias Graph =
     Dict Subject Node
 
 
+{-|
+-}
 type alias Node =
     { id : Uri
     , incoming : Dict Predicate (Set Uri)
@@ -35,38 +51,54 @@ type alias Node =
     }
 
 
+{-|
+-}
 type alias Adjacency a =
     Dict Predicate (LSEQ a)
 
 
+{-|
+-}
 type LocalsOrRemotes a
     = Locals (List (Local a))
     | Remotes (List (Remote a))
 
 
+{-|
+-}
 type alias Local a =
     ( ( Uri, Int ), LSEQ.Op a )
 
 
+{-|
+-}
 type alias Remote a =
     LSEQ.HistoryEntry a
 
 
+{-|
+-}
 empty : Graph
 empty =
     Dict.empty
 
 
+{-|
+-}
 initNode : Subject -> Node
 initNode s =
     Node s Dict.empty Dict.empty Dict.empty
 
 
+{-|
+-}
 get : Uri -> Graph -> Maybe Node
 get uri graph =
     Dict.get uri graph
 
 
+{-|
+-}
 applyCharOps : Uri -> Subject -> Predicate -> LocalsOrRemotes Char -> Graph -> ( Graph, ( List (Remote Char), State ) )
 applyCharOps origin s p ops graph =
     Dict.get s graph
@@ -93,6 +125,8 @@ applyCharOps origin s p ops graph =
         |> mapFirst (\node -> Dict.insert s node graph)
 
 
+{-|
+-}
 applyRefOps : Uri -> Subject -> Predicate -> LocalsOrRemotes Uri -> Graph -> ( Graph, ( List (Remote Uri), State ) )
 applyRefOps origin s p ops graph =
     Dict.get s graph

@@ -1,5 +1,9 @@
 module Bright.DB exposing (..)
 
+{-|
+@docs CharOrRefOps,CharOrRefRemoteOps,Entities,Entity,LocalOperations,Meta,Object,Query,RemoteOperations,States,Store,getPast,mutate,mutateRemote,noRemotes,opsLength,query,queryMeta,wildcard
+-}
+
 import Graph exposing (Graph, Subject, Predicate, Uri, State)
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -11,37 +15,54 @@ import Tuple exposing (..)
 import Array.Hamt as Array
 
 
+{-|
+-}
 type alias States =
     Store State
 
 
+{-|
+-}
 type alias RemoteOperations =
     Store ( CharOrRefRemoteOps, Graph.State )
 
 
+{-|
+-}
 type alias LocalOperations =
     Store CharOrRefOps
 
 
+{-|
+-}
 type CharOrRefOps
     = CharOps (List (Graph.Local Char))
     | RefOps (List (Graph.Local Uri))
 
 
+{-|
+-}
 type CharOrRefRemoteOps
     = CharRemoteOps (List (Graph.Remote Char))
     | RefRemoteOps (List (Graph.Remote Uri))
 
 
+{-|
+-}
 type Object
     = Ref (List (LSEQ.Entry Uri))
     | Literal (List (LSEQ.Entry Char))
 
 
+{-|
+-}
+wildcard : String
 wildcard =
     "*"
 
 
+{-|
+-}
 type alias Store a =
     Store.Store Subject Predicate a
 
@@ -53,18 +74,26 @@ type alias Entities =
     Store Object
 
 
+{-|
+-}
 type alias Meta =
     Dict Subject (Set Predicate)
 
 
+{-|
+-}
 type alias Entity =
     Dict Predicate Object
 
 
+{-|
+-}
 type alias Query =
     ( Uri, Uri, Uri )
 
 
+{-|
+-}
 opsLength : CharOrRefRemoteOps -> Int
 opsLength ops =
     case ops of
@@ -75,6 +104,8 @@ opsLength ops =
             List.length ops
 
 
+{-|
+-}
 queryMeta : Graph -> Query -> Meta
 queryMeta graph (( s, p, o ) as q) =
     if s == wildcard && p == wildcard && o == wildcard then
@@ -131,79 +162,82 @@ queryMeta graph (( s, p, o ) as q) =
         Dict.empty
 
 
+{-|
+-}
 query : Graph -> Query -> Entities
 query graph (( s, p, o ) as q) =
-    if s == wildcard && p /= wildcard && o /= wildcard then
-        case Graph.get o graph of
-            Nothing ->
-                Store.empty
-
-            Just node ->
-                node.incoming
-                    |> Dict.foldl
-                        (\p_ subjects result ->
-                            if p /= p_ then
-                                result
-                            else
-                                subjects
-                                    |> Set.foldl
-                                        (\s result ->
-                                            case Graph.get s graph of
-                                                Nothing ->
-                                                    result
-
-                                                Just node ->
-                                                    case Dict.get p node.body of
-                                                        Nothing ->
-                                                            case Dict.get p node.outgoing of
-                                                                Nothing ->
-                                                                    result
-
-                                                                Just lseqUri ->
-                                                                    Store.insertObject s p (Ref <| LSEQ.toList lseqUri) result
-
-                                                        Just lseqChar ->
-                                                            Store.insertObject s p (Literal <| LSEQ.toList lseqChar) result
-                                        )
-                                        result
-                        )
-                        Store.empty
-    else if s /= wildcard && o == wildcard then
-        case Graph.get s graph of
-            Nothing ->
-                Store.empty
-
-            Just node ->
-                foldOutgoing q node.outgoing Store.empty
-                    |> foldBody q node.body
-    else
-        Store.empty
-
-
-foldOutgoing ( s, p, o ) outgoing result =
-    Dict.foldl
-        (\p_ lseqUri result ->
-            if p /= wildcard && p_ /= p then
+    let
+        foldOutgoing ( s, p, o ) outgoing result =
+            Dict.foldl
+                (\p_ lseqUri result ->
+                    if p /= wildcard && p_ /= p then
+                        result
+                    else
+                        Store.insertObject s p_ (Ref <| LSEQ.toList lseqUri) result
+                )
                 result
-            else
-                Store.insertObject s p_ (Ref <| LSEQ.toList lseqUri) result
-        )
-        result
-        outgoing
+                outgoing
 
-
-foldBody ( s, p, o ) body result =
-    Dict.foldl
-        (\p_ lseqChar result ->
-            if p /= wildcard && p_ /= p then
+        foldBody ( s, p, o ) body result =
+            Dict.foldl
+                (\p_ lseqChar result ->
+                    if p /= wildcard && p_ /= p then
+                        result
+                    else
+                        Store.insertObject s p_ (Literal <| LSEQ.toList lseqChar) result
+                )
                 result
-            else
-                Store.insertObject s p_ (Literal <| LSEQ.toList lseqChar) result
-        )
-        result
-        body
+                body
+    in
+        if s == wildcard && p /= wildcard && o /= wildcard then
+            case Graph.get o graph of
+                Nothing ->
+                    Store.empty
+
+                Just node ->
+                    node.incoming
+                        |> Dict.foldl
+                            (\p_ subjects result ->
+                                if p /= p_ then
+                                    result
+                                else
+                                    subjects
+                                        |> Set.foldl
+                                            (\s result ->
+                                                case Graph.get s graph of
+                                                    Nothing ->
+                                                        result
+
+                                                    Just node ->
+                                                        case Dict.get p node.body of
+                                                            Nothing ->
+                                                                case Dict.get p node.outgoing of
+                                                                    Nothing ->
+                                                                        result
+
+                                                                    Just lseqUri ->
+                                                                        Store.insertObject s p (Ref <| LSEQ.toList lseqUri) result
+
+                                                            Just lseqChar ->
+                                                                Store.insertObject s p (Literal <| LSEQ.toList lseqChar) result
+                                            )
+                                            result
+                            )
+                            Store.empty
+        else if s /= wildcard && o == wildcard then
+            case Graph.get s graph of
+                Nothing ->
+                    Store.empty
+
+                Just node ->
+                    foldOutgoing q node.outgoing Store.empty
+                        |> foldBody q node.body
+        else
+            Store.empty
 
 
+{-|
+-}
 mutate : Graph -> Uri -> LocalOperations -> ( Graph, RemoteOperations )
 mutate graph origin localOps =
     localOps
@@ -233,6 +267,8 @@ mutate graph origin localOps =
             ( graph, Store.empty )
 
 
+{-|
+-}
 mutateRemote : Graph -> RemoteOperations -> ( Graph, RemoteOperations )
 mutateRemote graph remoteOps =
     remoteOps
@@ -262,11 +298,15 @@ mutateRemote graph remoteOps =
             ( graph, Store.empty )
 
 
+{-|
+-}
 noRemotes : ( CharOrRefRemoteOps, State )
 noRemotes =
     ( CharRemoteOps [], -1 )
 
 
+{-|
+-}
 getPast : Graph -> States -> RemoteOperations
 getPast graph states =
     states
