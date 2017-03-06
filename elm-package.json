@@ -7,13 +7,6 @@
         "src"
     ],
     "exposed-modules": [
-      "Bright",
-      "Graph",
-      "Store",
-      "Bright.DB",
-      "Bright.IO",
-      "Bright.Uris",
-      "Bright.Util"
 
     ],
     "native-modules": true,

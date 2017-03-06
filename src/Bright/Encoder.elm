@@ -77,28 +77,9 @@ encodeChar =
     String.fromChar >> Enc.string
 
 
-encodeChangedEntities : ChangedEntities -> Enc.Value
-encodeChangedEntities =
-    Store.encode encodeUri encodeUri encodeChangedObject
-
-
-encodeChangedObject : ChangedObject -> Enc.Value
-encodeChangedObject ( current, remotes ) =
-    Enc.list
-        [ LSEQ.encodeLayer Enc.string current
-          --, Enc.list <| List.map encodeRemote remotes
-        , Enc.list []
-        ]
-
-
 encodeLocalOperations : LocalOperations -> Enc.Value
 encodeLocalOperations =
     Store.encode encodeUri encodeUri encodeCharOrRefOps
-
-
-encodeIndexOperations : IndexOperations -> Enc.Value
-encodeIndexOperations =
-    Store.encode encodeUri encodeUri (Enc.list << List.map encodeUri)
 
 
 encodeRemoteOperations : RemoteOperations -> Enc.Value

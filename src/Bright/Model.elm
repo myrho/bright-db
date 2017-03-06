@@ -19,18 +19,6 @@ userSpace =
     "device"
 
 
-type alias ChangedEntities =
-    Store ChangedObject
-
-
-type alias ChangedEntity =
-    Dict Predicate ChangedObject
-
-
-type alias ChangedObject =
-    ( LSEQ.Layer String, List (Remote String) )
-
-
 {-|
 Entities is derived from History
 -}
@@ -67,13 +55,6 @@ type alias Store a =
 
 
 {-|
-  Stores (object, predicate, list of subjects)
--}
-type alias Index =
-    Store (Set Uri)
-
-
-{-|
 Subscriptions to other peers
 key is the (subject, predicate) uri of the entity
 -}
@@ -85,10 +66,6 @@ type alias Subscribed =
 -}
 type alias Subscribers =
     Dict Peer (Store ())
-
-
-type alias IndexOperations =
-    Store (List Uri)
 
 
 type alias Subscription =

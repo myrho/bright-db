@@ -11,8 +11,8 @@ import Bright.IO
 import Bright.Model
 import Bright.Update
 import Bright.Sub
-import Bright.DB exposing (Object(..), Entity, Entities)
-import Graph exposing (Uri, Predicate, Subject, Local)
+import Bright.DB exposing (Object(..))
+import Graph exposing (Predicate, Subject, Local)
 import Array.Hamt as Array exposing (Array)
 import Maybe.Extra
 import List.Extra
@@ -24,6 +24,10 @@ import Tuple exposing (..)
 import String
 import Store
 import Diff
+
+
+type alias Uri =
+    String
 
 
 type alias BBool =
@@ -42,23 +46,16 @@ type alias BString =
     List (LSEQ.Entry Char)
 
 
-
-{-
-   beforeAfterRef : ChangedObject -> ( Maybe BRef, Maybe BRef )
-   beforeAfterRef ( current, changes ) =
-       let
-           before =
-               LSEQ.revert changes current
-       in
-           ( LSEQ.head before
-           , LSEQ.head current
-           )
--}
+type alias Object =
+    Bright.DB.Object
 
 
-getUri : Model -> String -> Task String Uri
-getUri model str =
-    Task.succeed <| model.namespace ++ str
+type alias Entity =
+    Bright.DB.Entity
+
+
+type alias Entities =
+    Bright.DB.Entities
 
 
 class : Uri -> ( Predicate, List (Local Uri) )
