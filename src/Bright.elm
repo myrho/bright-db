@@ -105,6 +105,14 @@ ref uri =
     ]
 
 
+deleteRef : Uri -> List (Local Uri)
+deleteRef target =
+    [ ( ( target, 0 )
+      , LSEQ.Remove
+      )
+    ]
+
+
 {-| Compares input string and current string and creates an operation given the first char of the two string that do not match. If the input string is shorter than the current string, it's a remove operation, if longer, it's an insert operation, if equal it's a noop.
 char : String -> String -> List Local
 char current string =
@@ -284,6 +292,11 @@ initBFloat origin fl =
         |> List.map (LSEQ.Value >> LSEQ.Single origin)
 
 
+initBString : Uri -> String -> BString
+initBString =
+    string2ValueList
+
+
 toBBool : Object -> Maybe BBool
 toBBool object =
     case object of
@@ -326,6 +339,38 @@ toBString object =
 toBFloat : Object -> BFloat
 toBFloat =
     toBString
+
+
+bRefToUri : Uri -> BRef -> Maybe Uri
+bRefToUri origin ref =
+    case ref of
+        LSEQ.Single _ (LSEQ.Value uri) ->
+            Just uri
+
+        LSEQ.MVR mvr ->
+            case Dict.get origin mvr of
+                Just (LSEQ.Value uri) ->
+                    Just uri
+
+                _ ->
+                    (Dict.toList mvr
+                        |> List.sortBy first
+                        |> List.head
+                        |> Maybe.map second
+                        |> Maybe.map
+                            (\v ->
+                                case v of
+                                    LSEQ.Value uri ->
+                                        Just uri
+
+                                    _ ->
+                                        Nothing
+                            )
+                        |> Maybe.Extra.join
+                    )
+
+        _ ->
+            Nothing
 
 
 bFloatToFloat : Uri -> BFloat -> Result String Float
