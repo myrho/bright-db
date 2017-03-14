@@ -524,6 +524,34 @@ purge =
         )
 
 
+toList : List (LSEQ.Entry Uri) -> List Uri
+toList entryList =
+    entryList
+        |> List.filterMap
+            (\entry ->
+                case entry of
+                    LSEQ.Single _ (LSEQ.Value uri) ->
+                        Just [ uri ]
+
+                    LSEQ.MVR dict ->
+                        Dict.toList dict
+                            |> List.filterMap
+                                (\( k, v ) ->
+                                    case v of
+                                        LSEQ.Value uri ->
+                                            Just uri
+
+                                        _ ->
+                                            Nothing
+                                )
+                            |> Just
+
+                    _ ->
+                        Nothing
+            )
+        |> List.concat
+
+
 loadByType : Entities -> model -> List ( Uri, model -> Subject -> Entity -> ( model, Cmd msg ) ) -> ( model, Cmd msg )
 loadByType entities model map =
     Store.toDicts entities
